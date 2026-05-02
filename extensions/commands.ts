@@ -731,16 +731,21 @@ export const registerCommands = (pi: ExtensionAPI): void => {
         return;
       }
       try {
-        await handles.client.retainBatch(handles.bankId, records.map((record) => ({
-          content: record.content,
-          context: record.context,
-          tags: record.tags,
-          metadata: record.metadata,
-          timestamp: record.timestamp,
-          document_id: record.document_id,
-          update_mode: record.update_mode,
-          observation_scopes: record.observation_scopes,
-        })), { async: false });
+        // Hindsight rejects retainBatch calls containing multiple items with the
+        // same document_id. Queued session messages intentionally append to one
+        // stable session document, so flush records one at a time.
+        for (const record of records) {
+          await handles.client.retainBatch(record.bankId || handles.bankId, [{
+            content: record.content,
+            context: record.context,
+            tags: record.tags,
+            metadata: record.metadata,
+            timestamp: record.timestamp,
+            document_id: record.document_id,
+            update_mode: record.update_mode,
+            observation_scopes: record.observation_scopes,
+          }], { async: false });
+        }
         deleteQueue(sessionId, "auto");
         recordFlushSuccess();
         ctx.ui.notify(`Flushed ${records.length} Hindsight queued record(s).`, "success");

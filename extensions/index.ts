@@ -322,16 +322,22 @@ export default function hindsightMemory(pi: ExtensionAPI): void {
     const { records } = readQueueRecords(sessionId, "auto");
     if (records.length === 0) return;
     try {
-      await handles.client.retainBatch(handles.bankId, records.map((record) => ({
-        content: record.content,
-        context: record.context,
-        tags: record.tags,
-        metadata: record.metadata,
-        timestamp: record.timestamp,
-        document_id: record.document_id,
-        update_mode: record.update_mode,
-        observation_scopes: record.observation_scopes,
-      })), { async: false });
+      // Hindsight rejects retainBatch calls containing multiple items with the
+      // same document_id. The session queue intentionally appends many message
+      // records to one stable session document, so flush one queued record at a
+      // time while preserving the bank recorded when the message was queued.
+      for (const record of records) {
+        await handles.client.retainBatch(record.bankId || handles.bankId, [{
+          content: record.content,
+          context: record.context,
+          tags: record.tags,
+          metadata: record.metadata,
+          timestamp: record.timestamp,
+          document_id: record.document_id,
+          update_mode: record.update_mode,
+          observation_scopes: record.observation_scopes,
+        }], { async: false });
+      }
       deleteQueue(sessionId, "auto");
       recordFlushSuccess();
     } catch (error) {
