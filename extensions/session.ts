@@ -6,8 +6,7 @@ const hash = (value: string): string => createHash("sha256").update(value).diges
 
 export const sanitizeBankId = (value: string): string =>
   value
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/[^A-Za-z0-9_-]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 120) || "pi-memory";
 

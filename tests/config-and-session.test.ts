@@ -154,8 +154,8 @@ describe("config file resolution", () => {
 });
 
 describe("bank id derivation", () => {
-  it("sanitizes unsafe bank ids", () => {
-    expect(sanitizeBankId("My Repo/Feature Branch")).toBe("my-repo-feature-branch");
+  it("sanitizes unsafe bank ids without changing case", () => {
+    expect(sanitizeBankId("My Repo/Feature Branch")).toBe("My-Repo-Feature-Branch");
   });
 
   it("uses explicit mapping before strategy", async () => {
@@ -168,7 +168,7 @@ describe("bank id derivation", () => {
       mappings: { [cwd]: "Mapped Bank" },
     } as any;
 
-    await expect(deriveBankId(cwd, "per-repo", config)).resolves.toBe("mapped-bank");
+    await expect(deriveBankId(cwd, "per-repo", config)).resolves.toBe("Mapped-Bank");
   });
 
   it("uses manual bank id when strategy is manual", async () => {
@@ -181,7 +181,7 @@ describe("bank id derivation", () => {
       mappings: {},
     } as any;
 
-    await expect(deriveBankId(cwd, "manual", config)).resolves.toBe("team-memory");
+    await expect(deriveBankId(cwd, "manual", config)).resolves.toBe("Team-Memory");
   });
 
   it("uses global bank when strategy is global", async () => {
@@ -194,7 +194,7 @@ describe("bank id derivation", () => {
       mappings: {},
     } as any;
 
-    await expect(deriveBankId(cwd, "global", config)).resolves.toBe("global-memory");
+    await expect(deriveBankId(cwd, "global", config)).resolves.toBe("Global-Memory");
   });
 
   it("falls back to a deterministic derived bank id outside git repo", async () => {
@@ -209,6 +209,6 @@ describe("bank id derivation", () => {
 
     const bankId = await deriveBankId(cwd, "per-repo", config);
     expect(bankId.length).toBeGreaterThan(5);
-    expect(bankId).toMatch(/^[a-z0-9_-]+$/);
+    expect(bankId).toMatch(/^[A-Za-z0-9_-]+$/);
   });
 });
