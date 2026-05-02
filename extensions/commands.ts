@@ -733,9 +733,11 @@ export const registerCommands = (pi: ExtensionAPI): void => {
       try {
         // Hindsight rejects retainBatch calls containing multiple items with the
         // same document_id. Queued session messages intentionally append to one
-        // stable session document, so flush records one at a time.
+        // stable session document, so flush records one at a time. Use the
+        // currently resolved bank so old queued records do not recreate banks
+        // from a previous bank-id policy.
         for (const record of records) {
-          await handles.client.retainBatch(record.bankId || handles.bankId, [{
+          await handles.client.retainBatch(handles.bankId, [{
             content: record.content,
             context: record.context,
             tags: record.tags,

@@ -325,9 +325,10 @@ export default function hindsightMemory(pi: ExtensionAPI): void {
       // Hindsight rejects retainBatch calls containing multiple items with the
       // same document_id. The session queue intentionally appends many message
       // records to one stable session document, so flush one queued record at a
-      // time while preserving the bank recorded when the message was queued.
+      // time. Use the currently resolved bank so queued records created before
+      // a bank-id policy change do not recreate old banks.
       for (const record of records) {
-        await handles.client.retainBatch(record.bankId || handles.bankId, [{
+        await handles.client.retainBatch(handles.bankId, [{
           content: record.content,
           context: record.context,
           tags: record.tags,
